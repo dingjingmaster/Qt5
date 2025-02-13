@@ -192,7 +192,8 @@ static inline int qt_safe_open(const char *pathname, int flags, mode_t mode = 07
     flags |= O_CLOEXEC;
 #endif
     int fd;
-    EINTR_LOOP(fd, QT_OPEN(pathname, flags, mode));
+    EINTR_LOOP(fd, QT_OPEN(pathname, flags, mode)); 		// 当阻塞的系统调用（如：read、write、wait等）在执行过程中被捕获到信号而中断时候，该系统调用会返回-1，错误码位为EINTR。
+															// 这并不意味着系统调用失败，而是表示系统调用应该被重新执行。
 
 #ifndef O_CLOEXEC
     if (fd != -1)

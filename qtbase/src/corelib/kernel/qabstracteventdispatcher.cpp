@@ -401,22 +401,28 @@ void QAbstractEventDispatcher::closingDown()
 
 /*!
     Installs an event filter \a filterObj for all native events received by the application.
+	安装一个native event filter，该filter会接收到所有的native消息，
 
     The event filter \a filterObj receives events via its \l {QAbstractNativeEventFilter::}{nativeEventFilter()}
     function, which is called for all events received by all threads.
+	事件过滤器通过它的nativeEventFilter()函数接收到所有的事件，该函数会被所有线程接收到的事件调用。
 
     The  \l {QAbstractNativeEventFilter::}{nativeEventFilter()} function should return true
     if the event should be filtered, (in this case, stopped). It should return false to allow
     normal Qt processing to continue: the native event can then be translated
     into a QEvent and handled by the standard Qt \l{QEvent} {event} filtering,
     e.g. QObject::installEventFilter().
+	nativeEventFilter 函数返回true表示事件被过滤，(在这种情况下，事件传播停止)。返回false表示正常的Qt处理可以继续
 
     If multiple event filters are installed, the filter that was installed last
     is activated first.
+	如果安装了多个事件过滤器，则最后安装的过滤器优先生效。
 
     \note The filter function set here receives native messages,
     that is, MSG or XEvent structs.
+	\note 过滤函数接收的是native消息，即MSG或XEvent结构。
 
+	// 为了最大程度的移植性，应该总是尝试使用QEvent对象和QObject::installEventFilter()。
     For maximum portability, you should always try to use QEvent objects
     and QObject::installEventFilter() whenever possible.
 

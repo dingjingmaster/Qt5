@@ -111,17 +111,20 @@ struct QFreeListElement<void>
 
     It is possible to define your own constants struct/class and give this to
     QFreeList to customize/tune the behavior.
+
+	QFreeListDefaultConstants 是Qt内部使用的一个模板结构体、主要用于QFreeList这个数据结构的默认参数设置。
+	它定义了一些内存管理相关的常量，用于优化Qt的对象池(object pool)机制。
 */
 struct Q_AUTOTEST_EXPORT QFreeListDefaultConstants
 {
     // used by QFreeList, make sure to define all of when customizing
     enum {
-        InitialNextValue = 0,
+        InitialNextValue = 0, 					// 空闲链表的结束
         IndexMask = 0x00ffffff,
         SerialMask = ~IndexMask & ~0x80000000,
         SerialCounter = IndexMask + 1,
-        MaxIndex = IndexMask,
-        BlockCount = 4
+        MaxIndex = IndexMask, 					// 最大索引值
+        BlockCount = 4 							// 每个chunk包含的元素
     };
 
     static const int Sizes[BlockCount];
@@ -143,6 +146,14 @@ struct Q_AUTOTEST_EXPORT QFreeListDefaultConstants
     The ConstantsType type defaults to QFreeListDefaultConstants above. You can
     define your custom ConstantsType, see above for details on what needs to be
     available.
+
+	QFreeList<T>是Qt中的一个低级数据结构，类似于一个自由列表（freelist），
+	用于高效管理可复用的对象内存，减少频繁的动态分配和释放的开销
+
+	它的典型引用场景包括：
+	- Qt内存分配优化（如：QHash、QCache内部使用）
+	- 对象池（避免频繁new/delete）
+	- Qt事件系统（管理事件对象）
 */
 template <typename T, typename ConstantsType = QFreeListDefaultConstants>
 class QFreeList
@@ -153,6 +164,7 @@ class QFreeList
     typedef typename ElementType::ReferenceType ReferenceType;
 
     // return which block the index \a x falls in, and modify \a x to be the index into that block
+	// 返回索引x所在的块号，并将x修改为该块的索引
     static inline int blockfor(int &x)
     {
         for (int i = 0; i < ConstantsType::BlockCount; ++i) {
@@ -166,6 +178,7 @@ class QFreeList
     }
 
     // allocate a block of the given \a size, initialized starting with the given \a offset
+	// 分配一个大小为\a size的块，并从\a offset开始初始化
     static inline ElementType *allocate(int offset, int size)
     {
         // qDebug("QFreeList: allocating %d elements (%ld bytes) with offset %d", size, size * sizeof(ElementType), offset);
@@ -176,6 +189,7 @@ class QFreeList
     }
 
     // take the current serial number from \a o, increment it, and store it in \a n
+	// 从\a o中取出当前的序列号，递增它，并将结果存储在\a n中
     static inline int incrementserial(int o, int n)
     {
         return int((uint(n) & ConstantsType::IndexMask) | ((uint(o) + ConstantsType::SerialCounter) & ConstantsType::SerialMask));
@@ -187,6 +201,7 @@ class QFreeList
     QAtomicInt _next;
 
     // QFreeList is not copyable
+	// QFreeList 不能被拷贝
     Q_DISABLE_COPY_MOVE(QFreeList)
 
 public:
@@ -194,12 +209,14 @@ public:
     inline ~QFreeList();
 
     // returns the payload for the given index \a x
+	// 返回给定索引x的负载
     inline ConstReferenceType at(int x) const;
     inline ReferenceType operator[](int x);
 
     /*
         Return the next free id. Use this id to access the payload (see above).
         Call release(id) when done using the id.
+		返回下一个空闲id。使用这个id来访问负载（见上文）。调用release(id)时，表示已经不再使用该id。
     */
     inline int next();
     inline void release(int id);
@@ -251,6 +268,7 @@ inline int QFreeList<T, ConstantsType>::next()
             v = allocate((id & ConstantsType::IndexMask) - at, ConstantsType::Sizes[block]);
             if (!_v[block].testAndSetRelease(nullptr, v)) {
                 // race with another thread lost
+				// 另一个线程抢先释放了块，释放掉这个块
                 delete [] v;
                 v = _v[block].loadAcquire();
                 Q_ASSERT(v != nullptr);

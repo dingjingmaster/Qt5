@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     QByteArray outDataBufferBA;
     QBuffer outDataBuffer(&outDataBufferBA);
     outDataBuffer.open(QIODevice::WriteOnly);
-
+）
     const auto skip = [](const QByteArray &line) {
         if (line.isEmpty())
             return true;

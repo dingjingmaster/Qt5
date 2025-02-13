@@ -2,6 +2,7 @@ Continuous Integration
 ======================
 
 This directory contains files used by Qt's Continuous Integration system (Coin).
+此目录包含Qt持续集成系统所需的文件
 
 pre-provisioning
 ----------------
@@ -11,6 +12,8 @@ E.g. Visual studio installation takes too long to be included to automatic provi
 provisioning
 ------------
 Contains scripts that apply to different test machines in order to run automatic tests on them.
+包含许多测试机器的脚本，以便测试。
 For Windows scripts, make sure that the machine has "Set-ExecutionPolicy RemoteSigned -Force" set.
 (Run as admin in PowerShell)
+对于Windows脚本，确保机器上已设置“Set-ExecutionPolicy RemoteSigned -Force”。（在PowerShell中以管理员身份运行）
 
